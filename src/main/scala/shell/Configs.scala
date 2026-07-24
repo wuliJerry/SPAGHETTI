@@ -73,7 +73,7 @@ class PynqConfig (numSegments: Int = 1, numSorter: Int = 1) extends Config((site
       coherent = true,
       addrBits = 32,
       dataBits = 64,
-      lenBits = 8,
+      lenBits = 4, // 16-beat bursts; matches bufSize=256 & HP0
       userBits = 1),
     vcrParams = new VCRSimParams(num_ptrs = numSegments*6 + numSorter*3, num_vals = numSegments*3, num_event = numSorter + 3, num_ctrl = 1),
     vmeParams = new VMESimParams(numSegments = numSegments, numSorter = numSorter))

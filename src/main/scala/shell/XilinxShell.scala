@@ -69,7 +69,7 @@ class XilinxShell()(implicit p: Parameters) extends RawModule {
   m_axi_gmem.WUSER := shell.io.mem.w.bits.user
 
   shell.io.mem.b.valid := m_axi_gmem.BVALID
-  m_axi_gmem.BREADY := shell.io.mem.b.valid
+  m_axi_gmem.BREADY := shell.io.mem.b.ready
   shell.io.mem.b.bits.resp := m_axi_gmem.BRESP
   shell.io.mem.b.bits.id := m_axi_gmem.BID
   shell.io.mem.b.bits.user := m_axi_gmem.BUSER

@@ -4,3 +4,6 @@ src/target/*
 .idea/*
 build/*
 
+test_run_dir/
+target/
+project/target/

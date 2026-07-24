@@ -53,7 +53,9 @@ class StreamLoad(bufSize: Int, tensorType: String = "none", debug: Boolean = fal
 
 
   val queue = Module(new MIMOQueue(UInt(p(XLEN).W), entries = bufSize, tp.tensorWidth, NumOuts = 1))
-  queue.io.clear := false.B
+  // Flush any words left over from a previous launch (a beat is tensorWidth
+  // wide but only `len` words are consumed downstream, so padding remains).
+  queue.io.clear := io.start
 
   val sIdle :: sReadCmd :: sReadData :: Nil =
     Enum(3)

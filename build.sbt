@@ -38,9 +38,9 @@ resolvers ++= Seq(
 
 // Provide a managed dependency on X if -DXVersion="" is supplied on the command line.
 val defaultVersions = Map(
-  "chisel3" -> "3.3-SNAPSHOT",
-  "chisel-iotesters" -> "1.3-SNAPSHOT",
-  "dsptools" -> "1.3-SNAPSHOT"
+  "chisel3" -> "3.3.2",
+  "chisel-iotesters" -> "1.4.2",
+  "dsptools" -> "1.4.1"
 )
 
 libraryDependencies ++= Seq("chisel3", "chisel-iotesters","dsptools").map {
@@ -54,8 +54,9 @@ libraryDependencies ++= Seq(
 )
 
 // Berkley hardfloat. locally published (built with chisel2 scala 2.11)
-libraryDependencies ++= Seq("edu.berkeley.cs" %% "dsptools" % "1.3-SNAPSHOT")
-libraryDependencies ++= Seq("edu.berkeley.cs" %% "hardfloat" % "1.3-SNAPSHOT")
+libraryDependencies ++= Seq("edu.berkeley.cs" %% "dsptools" % "1.4.1")
+// hardfloat vendored in src/main/scala/hardfloat_vendored (compiled against this project's chisel3 3.3.2 to avoid the 1.2.4 ABI break)
+excludeDependencies ++= Seq("edu.berkeley.cs" % "hardfloat_2.12")
 
 
 resolvers ++= Seq(

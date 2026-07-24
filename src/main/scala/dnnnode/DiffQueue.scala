@@ -71,6 +71,7 @@ class DiffQueue[T <: Data](gen: T,
   when(io.clear) {
     enq_ptr := 0.U
     deq_ptr.value := 0.U
+    maybe_full := false.B
   }
 
   when (do_enq) {

@@ -193,6 +193,7 @@ class OuterDot[L <: Shapes : OperatorDot : OperatorReduction : OperatorCooSCAL]
 
   shapeTransformer_B.io.idx := bCnt.value
   shapeTransformer_B.io.numDeq := ptrST_B.io.out.bits
+  shapeTransformer_B.io.clear := io.start
 
   val outCnt_a = Counter(math.pow(2,p(XLEN)).toInt)
   val outCnt_b = Counter(math.pow(2,p(XLEN)).toInt)
@@ -205,6 +206,14 @@ class OuterDot[L <: Shapes : OperatorDot : OperatorReduction : OperatorCooSCAL]
   switch(state) {
     is(sIdle) {
       when(io.start) {
+        // Reset all run-scoped counters so a new launch starts clean.
+        // Without this, outCnt_{a,b} retain the previous run's segSize, so the
+        // strict-equality eop below either fires immediately (premature, empty
+        // output) or is never reached again (hang) -> OuterDot was not reentrant.
+        outCnt_a.value := 0.U
+        outCnt_b.value := 0.U
+        bCnt.value := 0.U
+        aCnt.value := 0.U
         indDMA_A.io.start := true.B
         valDMA_A.io.start := true.B
         state := sExec

@@ -60,7 +60,12 @@ class DiffShapeTransformer(bufSize: Int, memTensorType: String = "none")(implici
       }
     }
     is(sRead){
-      when((popCnt.value === elemNum - 1.U) && queue.io.deq.fire()){
+      // A queue of N=elemNum pointers produces only elemNum-1 diffs, so deq
+      // fires at most elemNum-1 times and popCnt.value reaches at most
+      // elemNum-2 at a fire. The old `elemNum - 1` was unreachable, so the
+      // queue never cleared and the module never returned to sIdle -> not
+      // reentrant across launches.
+      when((popCnt.value === elemNum - 2.U) && queue.io.deq.fire()){
         popCnt.value := 0.U
         queue.io.clear := true.B
         state := sIdle

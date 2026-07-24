@@ -28,6 +28,7 @@ class CooShifterIO(bufSize: Int, memTensorType: String = "none")(implicit val p:
 //    val len = Input(UInt(mp.addrBits.W))
     val idx = Input(UInt(log2Ceil(bufSize + 1).W))
     val numDeq = Input(UInt(log2Ceil(bufSize + 1).W))
+    val clear = Input(Bool())
 
     val ind = Flipped(Decoupled(UInt(p(ROWLEN).W)))
     val value = Flipped(Decoupled(UInt(p(XLEN).W)))
@@ -77,7 +78,14 @@ class CooShifter[L <: Shapes](rowBased: Boolean, bufSize: Int, memTensorType: St
 
 
 //  io.done := false.B
-  queue.io.clear := false.B
+  // Clear between launches: enq_ptr advances by every buffered word (incl.
+  // tensor-width padding) while deq_ptr advances only by real nnz, so the two
+  // diverge each run. Without a reset the next launch reads stale/padding rows.
+  queue.io.clear := io.clear
+  when(io.clear) {
+    pushCnt.value := 0.U
+    popCnt.value := 0.U
+  }
   queue.io.enq.bits := dataIn
   queue.io.enq.valid := io.ind.valid && io.value.valid     //queue.io.enq.ready && validReg === sRead//io.tensor(i).rd.data.valid
   io.ind.ready := queue.io.enq.ready && io.ind.valid && io.value.valid

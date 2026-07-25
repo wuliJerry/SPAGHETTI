@@ -48,11 +48,21 @@ class StreamLoad(bufSize: Int, tensorType: String = "none", debug: Boolean = fal
     new TensorDataCtrl(tensorType, sizeFactor, strideFactor))
   val dataCtrlDone = RegInit(false.B)
 
-  val tag = Reg(UInt(log2Ceil(tp.numMemBlock).W))
-  val set = Reg(UInt(log2Ceil(tp.tensorLength).W))
+  // (dead code — was meant for per-beat demux, never wired)
+  // val tag = Reg(UInt(log2Ceil(tp.numMemBlock).W))
+  // val set = Reg(UInt(log2Ceil(tp.tensorLength).W))
 
 
-  val queue = Module(new MIMOQueue(UInt(p(XLEN).W), entries = bufSize, tp.tensorWidth, NumOuts = 1))
+  // NumIns must equal the AXI beat width in words (dataBits/XLEN), NOT
+  // tensorWidth: each vme_rd.data beat carries dataBits bits, and enq below
+  // bit-casts one beat into one enqueue. With NumIns = tensorWidth (16) and a
+  // narrow bus (e.g. 64-bit -> 2 words/beat), the asTypeOf zero-extends every
+  // beat to 16 lanes (2 real words + 14 zeros) and enq_ptr jumps 16 per beat,
+  // so word k>=2 of a row reads back as 0 (real data stranded at ram[16*b]).
+  // At dataBits=512 busWidth == tensorWidth == 16, so this is unchanged there.
+  require(mp.dataBits % p(XLEN) == 0, "AXI bus width should be a multiple of XLEN")
+  val busWidth = mp.dataBits / p(XLEN)
+  val queue = Module(new MIMOQueue(UInt(p(XLEN).W), entries = bufSize, busWidth, NumOuts = 1))
   // Flush any words left over from a previous launch (a beat is tensorWidth
   // wide but only `len` words are consumed downstream, so padding remains).
   queue.io.clear := io.start
@@ -98,8 +108,9 @@ class StreamLoad(bufSize: Int, tensorType: String = "none", debug: Boolean = fal
     dataCtrlDone := true.B
   }
 
+  // words a burst of (len+1) beats will enqueue = (len+1) * busWidth
   val reqSize = Wire(UInt(p(XLEN).W))
-  reqSize := (dataCtrl.io.len * tp.tensorWidth.U) + tp.tensorWidth.U
+  reqSize := (dataCtrl.io.len * busWidth.U) + busWidth.U
   val check = Wire(Bool ())
   check := false.B
   when(reqSize <= (bufSize.U - queue.io.count)) {
